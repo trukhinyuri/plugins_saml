@@ -15,8 +15,13 @@
 package com.googlesource.gerrit.plugins.saml;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import com.google.gerrit.server.config.AuthConfig;
 import com.google.gerrit.util.http.testutil.FakeHttpServletRequest;
+import com.google.inject.ProvisionException;
 import org.junit.Test;
 
 public class SamlWebFilterTest {
@@ -33,5 +38,17 @@ public class SamlWebFilterTest {
     // path segment Jetty 12 rejects as "Ambiguous URI empty segment"
     assertThat(redirectUri).isEqualTo("/login/%2Fc%2Ftest_repo%2F%2B%2F1");
     assertThat(redirectUri).doesNotContain("//");
+  }
+
+  @Test
+  public void getAuthHeadersThrowsProvisionExceptionWhenHeaderIsNull() {
+    AuthConfig auth = mock(AuthConfig.class);
+    when(auth.getLoginHttpHeader()).thenReturn("SM_USER");
+    when(auth.getHttpEmailHeader()).thenReturn(null);
+    when(auth.getHttpExternalIdHeader()).thenReturn("SM_EXTERNAL_ID");
+
+    ProvisionException thrown =
+        assertThrows(ProvisionException.class, () -> new Module().getAuthHeaders(auth));
+    assertThat(thrown).hasMessageThat().contains("All authentication headers must be set.");
   }
 }

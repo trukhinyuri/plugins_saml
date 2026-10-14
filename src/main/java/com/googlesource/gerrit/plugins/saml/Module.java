@@ -24,6 +24,7 @@ import com.google.inject.Singleton;
 import com.googlesource.gerrit.plugins.saml.pgm.LibModuleDataDirUtil;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 import org.pac4j.saml.client.SAML2Client;
 
@@ -40,9 +41,9 @@ public class Module extends AbstractModule {
   public Set<String> getAuthHeaders(AuthConfig auth) {
     HashSet<String> authHeaders =
         Sets.newHashSet(
-            auth.getLoginHttpHeader().toUpperCase(),
-            auth.getHttpEmailHeader().toUpperCase(),
-            auth.getHttpExternalIdHeader().toUpperCase());
+            upperCaseOrNull(auth.getLoginHttpHeader()),
+            upperCaseOrNull(auth.getHttpEmailHeader()),
+            upperCaseOrNull(auth.getHttpExternalIdHeader()));
 
     if (authHeaders.contains("") || authHeaders.contains(null)) {
       throw new ProvisionException("All authentication headers must be set.");
@@ -55,6 +56,10 @@ public class Module extends AbstractModule {
     }
 
     return authHeaders;
+  }
+
+  private static String upperCaseOrNull(String header) {
+    return header != null ? header.toUpperCase(Locale.ROOT) : null;
   }
 
   @Provides
